@@ -74,9 +74,10 @@ module.exports = (grunt) ->
     @requiresConfig "#{@name}.version", "#{@name}.outputDir"
     done = @async()
 
-    {version, outputDir, downloadDir} = grunt.config @name
+    {version, outputDir, downloadDir, symbols} = grunt.config @name
     version = "v#{version}"
     downloadDir ?= path.join os.tmpdir(), 'downloaded-atom-shell'
+    symbols ?= false
 
     # Do nothing if it's the expected version.
     return done() if getCurrentAtomShellVersion(outputDir) is version
@@ -95,11 +96,17 @@ module.exports = (grunt) ->
 
       # Request the assets.
       github = new GitHub({repo: 'atom/atom-shell', token})
-      filename = "atom-shell-#{version}-#{process.platform}.zip"
       github.getReleases tag_name: version, (error, releases) ->
         if releases.length is 0
           grunt.log.error "Cannot find atom-shell #{version} from GitHub"
           return done false
+
+        # Which file to download
+        filename =
+          if symbols
+            "atom-shell-#{version}-#{process.platform}-symbols.zip"
+          else
+            "atom-shell-#{version}-#{process.platform}.zip"
 
         # Find the asset of current platform.
         found = false
