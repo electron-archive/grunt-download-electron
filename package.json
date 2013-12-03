@@ -3,6 +3,7 @@
   "description": "Grunt task to download atom-shell",
   "version": "0.1.0",
   "main": "grunt.js",
+  "private": "true",
   "dependencies": {
     "grunt": "0.4",
     "wrench": "1.5.4",
