@@ -1,5 +1,5 @@
 {
-  "name": "grunt-atom-shell",
+  "name": "grunt-download-atom-shell",
   "description": "Grunt task to download atom-shell",
   "version": "0.1.0",
   "main": "grunt.js",
@@ -11,15 +11,15 @@
   "licenses": [
     {
       "type": "MIT",
-      "url": "http://github.com/atom/grunt-atom-shell/raw/master/LICENSE"
+      "url": "http://github.com/atom/grunt-download-atom-shell/raw/master/LICENSE"
     }
   ],
-  "homepage": "https://github.com/atom/grunt-atom-shell",
+  "homepage": "https://github.com/atom/grunt-download-atom-shell",
   "repository": {
     "type": "git",
-    "url": "https://github.com/atom/grunt-atom-shell.git"
+    "url": "https://github.com/atom/grunt-download-atom-shell.git"
   },
   "bugs": {
-    "url": "https://github.com/atom/grunt-atom-shell/issues"
+    "url": "https://github.com/atom/grunt-download-atom-shell/issues"
   }
 }
