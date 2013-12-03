@@ -86,7 +86,7 @@ module.exports = (grunt) ->
     else
       callback()
 
-  grunt.registerTask 'update-atom-shell', 'Update atom-shell',  ->
+  grunt.registerTask 'download-atom-shell', 'Download atom-shell',  ->
     @requiresConfig "#{@name}.version", "#{@name}.outputDir"
     done = @async()
 
