@@ -116,8 +116,8 @@ module.exports = (grunt) ->
         # Request the assets.
         github = new GitHub({repo: 'atom/atom-shell', token})
         github.getReleases tag_name: version, (error, releases) ->
-          if releases.length is 0
-            grunt.log.error "Cannot find atom-shell #{version} from GitHub"
+          unless releases?.length > 0
+            grunt.log.error "Cannot find atom-shell #{version} from GitHub", error
             return done false
 
           # Which file to download
