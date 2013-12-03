@@ -21,13 +21,11 @@ module.exports = (grunt) ->
 
   getTokenFromKeychain = (callback) ->
     accessToken = process.env['ATOM_ACCESS_TOKEN']
-    if accessToken
-      callback(null, accessToken)
-      return
+    return callback null, accessToken if accessToken
 
     spawn {cmd: 'security', args: ['-q', 'find-generic-password', '-ws', 'GitHub API Token']}, (error, result, code) ->
       accessToken = result.stdout unless error?
-      callback(error, accessToken)
+      callback error, accessToken
 
   getCurrentAtomShellVersion = (outputDir) ->
     versionPath = path.join outputDir, 'version'
@@ -70,9 +68,7 @@ module.exports = (grunt) ->
 
     inputStream.pipe fs.createWriteStream(cacheFile)
     inputStream.on 'error', callback
-    inputStream.on 'end', ->
-      unzipAtomShell cacheFile, (error) ->
-        return callback error if error?
+    inputStream.on 'end', unzipAtomShell.bind this, cacheFile, callback
 
   grunt.registerTask 'update-atom-shell', 'Update atom-shell',  ->
     @requiresConfig "#{@name}.version", "#{@name}.outputDir"
