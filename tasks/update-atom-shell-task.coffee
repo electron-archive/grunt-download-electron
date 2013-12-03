@@ -19,6 +19,14 @@ module.exports = (grunt) ->
       grunt.log.error results.stderr if code != 0
       callback error, results, code
 
+  getApmPath = ->
+    apmInCurrentProject = path.join 'node_modules', '.bin', 'apm'
+    apmInCurrentProject += '.cmd' if process.platform is 'win32'
+    if grunt.file.isFile apmInCurrentProject
+      apmInCurrentProject
+    else
+      if process is 'win32' then 'apm.cmd' else 'apm'
+
   getTokenFromKeychain = (callback) ->
     accessToken = process.env['ATOM_ACCESS_TOKEN']
     return callback null, accessToken if accessToken
@@ -44,7 +52,7 @@ module.exports = (grunt) ->
       inflateSymlinks: false
 
   unzipAtomShell = (zipPath, callback) ->
-    grunt.verbose.writeln 'Unzipping atom-shell'
+    grunt.verbose.writeln 'Unzipping atom-shell.'
     directoryPath = path.dirname zipPath
 
     if process.platform is 'darwin'
@@ -70,64 +78,75 @@ module.exports = (grunt) ->
     inputStream.on 'error', callback
     inputStream.on 'end', unzipAtomShell.bind this, cacheFile, callback
 
+  rebuildNativeModules = (apm, previousVersion, currentVersion, callback) ->
+    if currentVersion isnt previousVersion
+      grunt.verbose.writeln "Rebuilding native modules for new atom-shell version #{currentVersion}."
+      apm ?= getApmPath()
+      spawn {cmd: apm, args: ['rebuild']}, callback
+    else
+      callback()
+
   grunt.registerTask 'update-atom-shell', 'Update atom-shell',  ->
     @requiresConfig "#{@name}.version", "#{@name}.outputDir"
     done = @async()
 
-    {version, outputDir, downloadDir, symbols} = grunt.config @name
+    {version, outputDir, downloadDir, symbols, rebuild, apm} = grunt.config @name
     version = "v#{version}"
     downloadDir ?= path.join os.tmpdir(), 'downloaded-atom-shell'
     symbols ?= false
+    rebuild ?= false
+    apm ?= getApmPath()
 
     # Do nothing if it's the expected version.
-    return done() if getCurrentAtomShellVersion(outputDir) is version
+    currentAtomShellVersion = getCurrentAtomShellVersion outputDir
+    return done() if currentAtomShellVersion is version
 
     # Try find the cached one.
     if isAtomShellVersionCached downloadDir, version
-      grunt.verbose.writeln("Installing cached atom-shell #{version}")
+      grunt.verbose.writeln("Installing cached atom-shell #{version}.")
       installAtomShell outputDir, downloadDir, version
-      return done()
-
-    # Get the token.
-    getTokenFromKeychain (error, token) ->
-      if error?
-        grunt.log.error 'Cannot get GitHub token for accessing atom/atom-shell'
-        return done false
-
-      # Request the assets.
-      github = new GitHub({repo: 'atom/atom-shell', token})
-      github.getReleases tag_name: version, (error, releases) ->
-        if releases.length is 0
-          grunt.log.error "Cannot find atom-shell #{version} from GitHub"
+      rebuildNativeModules apm, currentAtomShellVersion, version, done
+    else
+      # Get the token.
+      getTokenFromKeychain (error, token) ->
+        if error?
+          grunt.log.error 'Cannot get GitHub token for accessing atom/atom-shell'
           return done false
 
-        # Which file to download
-        filename =
-          if symbols
-            "atom-shell-#{version}-#{process.platform}-symbols.zip"
-          else
-            "atom-shell-#{version}-#{process.platform}.zip"
+        # Request the assets.
+        github = new GitHub({repo: 'atom/atom-shell', token})
+        github.getReleases tag_name: version, (error, releases) ->
+          if releases.length is 0
+            grunt.log.error "Cannot find atom-shell #{version} from GitHub"
+            return done false
 
-        # Find the asset of current platform.
-        found = false
-        for asset in releases[0].assets when asset.name is filename
-          found = true
-          github.downloadAsset asset, (error, inputStream) ->
-            if error?
-              grunt.log.error "Cannot download atom-shell #{version}", error
-              return done false
+          # Which file to download
+          filename =
+            if symbols
+              "atom-shell-#{version}-#{process.platform}-symbols.zip"
+            else
+              "atom-shell-#{version}-#{process.platform}.zip"
 
-            # Save file to cache.
-            grunt.verbose.writeln "Downloading atom-shell #{version}"
-            saveAtomShellToCache inputStream, outputDir, downloadDir, version, (error) ->
+          # Find the asset of current platform.
+          found = false
+          for asset in releases[0].assets when asset.name is filename
+            found = true
+            github.downloadAsset asset, (error, inputStream) ->
               if error?
-                grunt.log.error "Failed to download atom-shell #{version}", error
+                grunt.log.error "Cannot download atom-shell #{version}", error
                 return done false
 
-              grunt.verbose.writeln "Installing atom-shell #{version}"
-              installAtomShell outputDir, downloadDir, version
-              return done()
+              # Save file to cache.
+              grunt.verbose.writeln "Downloading atom-shell #{version}."
+              saveAtomShellToCache inputStream, outputDir, downloadDir, version, (error) ->
+                if error?
+                  grunt.log.error "Failed to download atom-shell #{version}", error
+                  return done false
 
-        if not found
-          grunt.log.error "Cannot find #{filename} in atom-shell #{version} release"
-          done false
+                grunt.verbose.writeln "Installing atom-shell #{version}."
+                installAtomShell outputDir, downloadDir, version
+                rebuildNativeModules apm, currentAtomShellVersion, version, done
+
+          if not found
+            grunt.log.error "Cannot find #{filename} in atom-shell #{version} release"
+            done false
