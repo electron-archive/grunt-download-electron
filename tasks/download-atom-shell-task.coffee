@@ -74,9 +74,11 @@ module.exports = (grunt) ->
     wrench.mkdirSyncRecursive path.join downloadDir, version
     cacheFile = path.join downloadDir, version, 'atom-shell.zip'
 
-    inputStream.pipe fs.createWriteStream(cacheFile)
+    outputStream = fs.createWriteStream(cacheFile)
+    inputStream.pipe outputStream
     inputStream.on 'error', callback
-    inputStream.on 'end', unzipAtomShell.bind this, cacheFile, callback
+    outputStream.on 'error', callback
+    outputStream.on 'end', unzipAtomShell.bind this, cacheFile, callback
 
   rebuildNativeModules = (apm, previousVersion, currentVersion, callback) ->
     if currentVersion isnt previousVersion
