@@ -78,7 +78,7 @@ module.exports = (grunt) ->
     inputStream.pipe outputStream
     inputStream.on 'error', callback
     outputStream.on 'error', callback
-    outputStream.on 'end', unzipAtomShell.bind this, cacheFile, callback
+    outputStream.on 'close', unzipAtomShell.bind this, cacheFile, callback
 
   rebuildNativeModules = (apm, previousVersion, currentVersion, callback) ->
     if currentVersion isnt previousVersion
