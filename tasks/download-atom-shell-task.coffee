@@ -1,6 +1,7 @@
 fs     = require 'fs'
 path   = require 'path'
 os     = require 'os'
+unzip  = require 'unzip'
 wrench = require 'wrench'
 GitHub = require 'github-releases'
 
