@@ -1,9 +1,10 @@
-fs     = require 'fs'
-path   = require 'path'
-os     = require 'os'
-unzip  = require 'unzip'
-wrench = require 'wrench'
-GitHub = require 'github-releases'
+fs       = require 'fs'
+path     = require 'path'
+os       = require 'os'
+unzip    = require 'unzip'
+wrench   = require 'wrench'
+GitHub   = require 'github-releases'
+Progress = require 'progress'
 
 module.exports = (grunt) ->
   spawn = (options, callback) ->
@@ -75,11 +76,18 @@ module.exports = (grunt) ->
     wrench.mkdirSyncRecursive path.join downloadDir, version
     cacheFile = path.join downloadDir, version, 'atom-shell.zip'
 
+    len = parseInt(inputStream.headers['content-length'], 10)
+    progress = new Progress('downloading [:bar] :percent :etas', {complete: '=', incomplete: ' ', width: 20, total: len})
+
     outputStream = fs.createWriteStream(cacheFile)
     inputStream.pipe outputStream
     inputStream.on 'error', callback
     outputStream.on 'error', callback
     outputStream.on 'close', unzipAtomShell.bind this, cacheFile, callback
+    inputStream.on 'data', (chunk) ->
+      process.stdout.clearLine()
+      process.stdout.cursorTo(0)
+      progress.tick(chunk.length)
 
   rebuildNativeModules = (apm, previousVersion, currentVersion, callback) ->
     if currentVersion isnt previousVersion
