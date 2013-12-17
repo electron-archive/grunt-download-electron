@@ -76,8 +76,9 @@ module.exports = (grunt) ->
     wrench.mkdirSyncRecursive path.join downloadDir, version
     cacheFile = path.join downloadDir, version, 'atom-shell.zip'
 
-    len = parseInt(inputStream.headers['content-length'], 10)
-    progress = new Progress('downloading [:bar] :percent :etas', {complete: '=', incomplete: ' ', width: 20, total: len})
+    unless process.platform is 'win32'
+      len = parseInt(inputStream.headers['content-length'], 10)
+      progress = new Progress('downloading [:bar] :percent :etas', {complete: '=', incomplete: ' ', width: 20, total: len})
 
     outputStream = fs.createWriteStream(cacheFile)
     inputStream.pipe outputStream
@@ -85,6 +86,8 @@ module.exports = (grunt) ->
     outputStream.on 'error', callback
     outputStream.on 'close', unzipAtomShell.bind this, cacheFile, callback
     inputStream.on 'data', (chunk) ->
+      return if process.platform is 'win32'
+
       process.stdout.clearLine()
       process.stdout.cursorTo(0)
       progress.tick(chunk.length)
