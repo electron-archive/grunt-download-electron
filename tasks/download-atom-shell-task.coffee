@@ -88,8 +88,8 @@ module.exports = (grunt) ->
     inputStream.on 'data', (chunk) ->
       return if process.platform is 'win32'
 
-      process.stdout.clearLine()
-      process.stdout.cursorTo(0)
+      process.stdout.clearLine?()
+      process.stdout.cursorTo?(0)
       progress.tick(chunk.length)
 
   rebuildNativeModules = (apm, previousVersion, currentVersion, callback) ->
