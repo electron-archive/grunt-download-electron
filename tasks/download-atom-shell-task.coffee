@@ -23,12 +23,15 @@ module.exports = (grunt) ->
       callback error, results, code
 
   getApmPath = ->
+    apmInApmDirectory = path.join 'apm', 'node_modules', '.bin', 'apm'
+    apmInApmDirectory += '.cmd' if process.platform is 'win32'
+    return apmInApmDirectory if grunt.file.isFile apmInApmDirectory
+
     apmInCurrentProject = path.join 'node_modules', '.bin', 'apm'
     apmInCurrentProject += '.cmd' if process.platform is 'win32'
-    if grunt.file.isFile apmInCurrentProject
-      apmInCurrentProject
-    else
-      if process is 'win32' then 'apm.cmd' else 'apm'
+    return apmInCurrentProject if grunt.file.isFile apmInCurrentProject
+
+    if process is 'win32' then 'apm.cmd' else 'apm'
 
   getTokenFromKeychain = (callback) ->
     accessToken = process.env['ATOM_ACCESS_TOKEN']
