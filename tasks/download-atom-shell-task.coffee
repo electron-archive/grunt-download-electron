@@ -5,6 +5,7 @@ unzip    = require 'unzip'
 wrench   = require 'wrench'
 GitHub   = require 'github-releases'
 Progress = require 'progress'
+keytar   = require 'keytar'
 
 module.exports = (grunt) ->
   spawn = (options, callback) ->
@@ -33,9 +34,11 @@ module.exports = (grunt) ->
     accessToken = process.env['ATOM_ACCESS_TOKEN']
     return callback null, accessToken if accessToken
 
-    spawn {cmd: 'security', args: ['-q', 'find-generic-password', '-ws', 'GitHub API Token']}, (error, result, code) ->
-      accessToken = result.stdout unless error?
-      callback error, accessToken
+    for tokenName in ['Atom GitHub API Token', 'GitHub API Token']
+      if accessToken = keytar.findPassword(tokenName)
+        return callback null, accessToken
+
+    callback new Error('No GitHub API token in keychain or in ATOM_ACCESS_TOKEN environment variable')
 
   getCurrentAtomShellVersion = (outputDir) ->
     versionPath = path.join outputDir, 'version'

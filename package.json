@@ -9,7 +9,8 @@
     "wrench": "1.5.4",
     "unzip": "0.1.8",
     "github-releases": "0.1.1",
-    "progress": "1.1.2"
+    "progress": "1.1.2",
+    "keytar": "~0.15.0"
   },
   "licenses": [
     {
