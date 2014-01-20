@@ -1,7 +1,6 @@
 fs       = require 'fs'
 path     = require 'path'
 os       = require 'os'
-unzip    = require 'unzip'
 wrench   = require 'wrench'
 GitHub   = require 'github-releases'
 Progress = require 'progress'
@@ -70,13 +69,14 @@ module.exports = (grunt) ->
         fs.unlinkSync zipPath
         callback error
     else
-      fileStream = fs.createReadStream zipPath
-      fileStream.on 'error', callback
-      zipStream = fileStream.pipe unzip.Extract(path: directoryPath)
-      zipStream.on 'error', callback
-      zipStream.on 'close', ->
+      DecompressZip = require('decompress-zip')
+      unzipper = new DecompressZip(zipPath)
+      unzipper.on 'error', callback
+      unzipper.on 'extract', (log) ->
+        fs.closeSync unzipper.fd
         fs.unlinkSync zipPath
         callback null
+      unzipper.extract(path: directoryPath)
 
   saveAtomShellToCache = (inputStream, outputDir, downloadDir, version, callback) ->
     wrench.mkdirSyncRecursive path.join downloadDir, version
