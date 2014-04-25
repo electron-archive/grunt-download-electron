@@ -4,7 +4,6 @@ os       = require 'os'
 wrench   = require 'wrench'
 GitHub   = require 'github-releases'
 Progress = require 'progress'
-keytar   = require 'keytar'
 
 module.exports = (grunt) ->
   spawn = (options, callback) ->
@@ -31,16 +30,6 @@ module.exports = (grunt) ->
     return apmInCurrentProject if grunt.file.isFile apmInCurrentProject
 
     if process is 'win32' then 'apm.cmd' else 'apm'
-
-  getTokenFromKeychain = (callback) ->
-    accessToken = process.env['ATOM_ACCESS_TOKEN']
-    return callback null, accessToken if accessToken
-
-    for tokenName in ['Atom GitHub API Token', 'GitHub API Token']
-      if accessToken = keytar.findPassword(tokenName)
-        return callback null, accessToken
-
-    callback new Error('No GitHub API token in keychain or in ATOM_ACCESS_TOKEN environment variable')
 
   getCurrentAtomShellVersion = (outputDir) ->
     versionPath = path.join outputDir, 'version'
@@ -127,46 +116,40 @@ module.exports = (grunt) ->
       installAtomShell outputDir, downloadDir, version
       rebuildNativeModules apm, currentAtomShellVersion, version, done
     else
-      # Get the token.
-      getTokenFromKeychain (error, token) ->
-        if error?
-          grunt.log.error 'Cannot get GitHub token for accessing atom/atom-shell'
+      # Request the assets.
+      github = new GitHub({repo: 'atom/atom-shell'})
+      github.getReleases tag_name: version, (error, releases) ->
+        unless releases?.length > 0
+          grunt.log.error "Cannot find atom-shell #{version} from GitHub", error
           return done false
 
-        # Request the assets.
-        github = new GitHub({repo: 'atom/atom-shell', token})
-        github.getReleases tag_name: version, (error, releases) ->
-          unless releases?.length > 0
-            grunt.log.error "Cannot find atom-shell #{version} from GitHub", error
-            return done false
+        # Which file to download
+        filename =
+          if symbols
+            "atom-shell-#{version}-#{process.platform}-symbols.zip"
+          else
+            "atom-shell-#{version}-#{process.platform}.zip"
 
-          # Which file to download
-          filename =
-            if symbols
-              "atom-shell-#{version}-#{process.platform}-symbols.zip"
-            else
-              "atom-shell-#{version}-#{process.platform}.zip"
+        # Find the asset of current platform.
+        found = false
+        for asset in releases[0].assets when asset.name is filename
+          found = true
+          github.downloadAsset asset, (error, inputStream) ->
+            if error?
+              grunt.log.error "Cannot download atom-shell #{version}", error
+              return done false
 
-          # Find the asset of current platform.
-          found = false
-          for asset in releases[0].assets when asset.name is filename
-            found = true
-            github.downloadAsset asset, (error, inputStream) ->
+            # Save file to cache.
+            grunt.verbose.writeln "Downloading atom-shell #{version}."
+            saveAtomShellToCache inputStream, outputDir, downloadDir, version, (error) ->
               if error?
-                grunt.log.error "Cannot download atom-shell #{version}", error
+                grunt.log.error "Failed to download atom-shell #{version}", error
                 return done false
 
-              # Save file to cache.
-              grunt.verbose.writeln "Downloading atom-shell #{version}."
-              saveAtomShellToCache inputStream, outputDir, downloadDir, version, (error) ->
-                if error?
-                  grunt.log.error "Failed to download atom-shell #{version}", error
-                  return done false
+              grunt.verbose.writeln "Installing atom-shell #{version}."
+              installAtomShell outputDir, downloadDir, version
+              rebuildNativeModules apm, currentAtomShellVersion, version, done
 
-                grunt.verbose.writeln "Installing atom-shell #{version}."
-                installAtomShell outputDir, downloadDir, version
-                rebuildNativeModules apm, currentAtomShellVersion, version, done
-
-          if not found
-            grunt.log.error "Cannot find #{filename} in atom-shell #{version} release"
-            done false
+        if not found
+          grunt.log.error "Cannot find #{filename} in atom-shell #{version} release"
+          done false
