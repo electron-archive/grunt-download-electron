@@ -7,7 +7,7 @@ Download atom-shell.
 Install npm package, next to your project's `Gruntfile.js` file:
 
 ```sh
-npm install git+ssh://git@github.com:atom/grunt-download-atom-shell.git
+npm install --save-dev grunt-download-atom-shell
 ```
 
 Add this line to your project's `Gruntfile.js`:
