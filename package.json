@@ -9,7 +9,7 @@
     "grunt": "0.4",
     "wrench": "1.5.4",
     "github-releases": "0.1.1",
-    "progress": "1.1.2",
+    "progress": "1.1.2"
   },
   "licenses": [
     {
