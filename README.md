@@ -27,11 +27,25 @@ grunt.loadNpmTasks('grunt-download-atom-shell');
 
 ### Example
 
-    module.exports = function(grunt) {
-      grunt.initConfig({
-        download-atom-shell: {
-          version: '0.12.3',
-          outputDir: 'binaries'
-        }
-      });
-    };
+#### Gruntfile.js
+
+```js
+module.exports = function(grunt) {
+  grunt.initConfig({
+    'download-atom-shell': {
+      version: '0.12.3',
+      outputDir: 'binaries'
+    }
+  });
+};
+```
+
+#### Gruntfile.coffee
+
+```coffee
+module.exports = (grunt) ->
+  grunt.initConfig
+    'download-atom-shell':
+      version: '0.12.3'
+      outputDir: 'binaries'
+```
