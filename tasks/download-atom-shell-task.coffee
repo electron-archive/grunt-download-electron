@@ -42,6 +42,7 @@ module.exports = (grunt) ->
     grunt.file.isFile path.join(downloadDir, version, 'version')
 
   installAtomShell = (outputDir, downloadDir, version) ->
+    wrench.mkdirSyncRecursive(outputDir)
     wrench.copyDirSyncRecursive path.join(downloadDir, version), outputDir,
       forceDelete: true
       excludeHiddenUnix: false
