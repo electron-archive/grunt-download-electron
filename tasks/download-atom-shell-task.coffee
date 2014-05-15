@@ -21,9 +21,10 @@ module.exports = (grunt) ->
       callback error, results, code
 
   getApmPath = ->
-    apmInApmDirectory = path.join 'apm', 'node_modules', 'atom-package-manager', 'bin', 'apm'
-    apmInApmDirectory += '.cmd' if process.platform is 'win32'
-    return apmInApmDirectory if grunt.file.isFile apmInApmDirectory
+    apmPath = path.join 'apm', 'node_modules', 'atom-package-manager', 'bin', 'apm'
+    apmPath = 'apm' unless grunt.file.isFile apmPath
+
+    if process is 'win32' then "#{apmPath}.cmd" else apmPath
 
   getCurrentAtomShellVersion = (outputDir) ->
     versionPath = path.join outputDir, 'version'
