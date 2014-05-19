@@ -24,6 +24,8 @@ grunt.loadNpmTasks('grunt-download-atom-shell');
 * `symbols` - Download debugging symbols instead of binaries, default to `false`.
 * `rebuild` - Whether to rebuild native modules after atom-shell is downloaded.
 * `apm` - The path to apm.
+* `platform` - What platform to download (`win32`, `darwin`, `linux`). default is the host platform.
+* `addPlatformToOutputPath` - Whether to put the downloaded atom-shell in a platform specific directory within outputDir. (e.g., outputDir/darwin/) Defaults to `false` for backwards compatibility.
 
 ### Example
 
