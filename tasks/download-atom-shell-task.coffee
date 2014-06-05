@@ -24,7 +24,7 @@ module.exports = (grunt) ->
     apmPath = path.join 'apm', 'node_modules', 'atom-package-manager', 'bin', 'apm'
     apmPath = 'apm' unless grunt.file.isFile apmPath
 
-    if process is 'win32' then "#{apmPath}.cmd" else apmPath
+    if process.platform is 'win32' then "#{apmPath}.cmd" else apmPath
 
   getCurrentAtomShellVersion = (outputDir) ->
     versionPath = path.join outputDir, 'version'
@@ -118,12 +118,22 @@ module.exports = (grunt) ->
           grunt.log.error "Cannot find atom-shell #{version} from GitHub", error
           return done false
 
+        # Decide which arch to download:
+        # Windows: 32bit
+        # Linux: Current platform's arch
+        # Mac: 64bit
+        arch =
+          switch process.platform
+            when 'win32' then 'ia32'
+            when 'darwin' then 'x64'
+            else process.arch
+
         # Which file to download
         filename =
           if symbols
-            "atom-shell-#{version}-#{process.platform}-symbols.zip"
+            "atom-shell-#{version}-#{process.platform}-#{arch}-symbols.zip"
           else
-            "atom-shell-#{version}-#{process.platform}.zip"
+            "atom-shell-#{version}-#{process.platform}-#{arch}.zip"
 
         # Find the asset of current platform.
         found = false
