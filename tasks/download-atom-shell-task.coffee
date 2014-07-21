@@ -82,8 +82,8 @@ module.exports = (grunt) ->
       process.stdout.cursorTo?(0)
       progress.tick(chunk.length)
 
-  rebuildNativeModules = (apm, previousVersion, currentVersion, callback) ->
-    if currentVersion isnt previousVersion
+  rebuildNativeModules = (apm, previousVersion, currentVersion, needToRebuild, callback) ->
+    if currentVersion isnt previousVersion and needToRebuild
       grunt.verbose.writeln "Rebuilding native modules for new atom-shell version #{currentVersion}."
       apm ?= getApmPath()
       spawn {cmd: apm, args: ['rebuild']}, callback
@@ -98,7 +98,7 @@ module.exports = (grunt) ->
     version = "v#{version}"
     downloadDir ?= path.join os.tmpdir(), 'downloaded-atom-shell'
     symbols ?= false
-    rebuild ?= false
+    rebuild ?= true
     apm ?= getApmPath()
 
     # Do nothing if it's the expected version.
@@ -109,7 +109,7 @@ module.exports = (grunt) ->
     if isAtomShellVersionCached downloadDir, version
       grunt.verbose.writeln("Installing cached atom-shell #{version}.")
       installAtomShell outputDir, downloadDir, version
-      rebuildNativeModules apm, currentAtomShellVersion, version, done
+      rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done
     else
       # Request the assets.
       github = new GitHub({repo: 'atom/atom-shell'})
@@ -153,7 +153,7 @@ module.exports = (grunt) ->
 
               grunt.verbose.writeln "Installing atom-shell #{version}."
               installAtomShell outputDir, downloadDir, version
-              rebuildNativeModules apm, currentAtomShellVersion, version, done
+              rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done
 
         if not found
           grunt.log.error "Cannot find #{filename} in atom-shell #{version} release"
