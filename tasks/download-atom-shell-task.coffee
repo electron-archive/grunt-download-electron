@@ -56,9 +56,15 @@ module.exports = (grunt) ->
       DecompressZip = require('decompress-zip')
       unzipper = new DecompressZip(zipPath)
       unzipper.on 'error', callback
-      unzipper.on 'extract', (log) ->
+      unzipper.on 'extract', ->
         fs.closeSync unzipper.fd
         fs.unlinkSync zipPath
+
+        # Make sure atom is executable
+        if process.platform is 'linux'
+          atomAppPath = path.join(directoryPath, 'atom')
+          fs.chmodSync(atomAppPath, '755') if fs.existsSync(atomAppPath)
+
         callback null
       unzipper.extract(path: directoryPath)
 
