@@ -60,7 +60,7 @@ module.exports = (grunt) ->
         fs.closeSync unzipper.fd
         fs.unlinkSync zipPath
 
-        # Make sure atom is executable
+        # Make sure atom is executable on Linux
         if process.platform is 'linux'
           atomAppPath = path.join(directoryPath, 'atom')
           fs.chmodSync(atomAppPath, '755') if fs.existsSync(atomAppPath)
