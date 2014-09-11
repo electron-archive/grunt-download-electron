@@ -92,7 +92,8 @@ module.exports = (grunt) ->
     if currentVersion isnt previousVersion and needToRebuild
       grunt.verbose.writeln "Rebuilding native modules for new atom-shell version #{currentVersion}."
       apm ?= getApmPath()
-      spawn {cmd: apm, args: ['rebuild']}, callback
+      env = ATOM_NODE_VERSION: currentVersion.substr(1)
+      spawn {cmd: apm, args: ['rebuild'], env}, callback
     else
       callback()
 
