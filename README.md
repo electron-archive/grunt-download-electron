@@ -33,7 +33,7 @@ grunt.loadNpmTasks('grunt-download-atom-shell');
 module.exports = function(grunt) {
   grunt.initConfig({
     'download-atom-shell': {
-      version: '0.12.3',
+      version: '0.16.3',
       outputDir: 'binaries'
     }
   });
@@ -46,6 +46,6 @@ module.exports = function(grunt) {
 module.exports = (grunt) ->
   grunt.initConfig
     'download-atom-shell':
-      version: '0.12.3'
+      version: '0.16.3'
       outputDir: 'binaries'
 ```
