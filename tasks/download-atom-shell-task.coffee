@@ -14,8 +14,9 @@ module.exports = (grunt) ->
     proc = childProcess.spawn options.cmd, options.args, options.opts
     proc.stdout.on 'data', (data) -> stdout.push data.toString()
     proc.stderr.on 'data', (data) -> stderr.push data.toString()
+    proc.on 'error', (processError) -> error ?= processError
     proc.on 'exit', (code, signal) ->
-      error = new Error(signal) if code != 0
+      error ?= new Error(signal) if code != 0
       results = stderr: stderr.join(''), stdout: stdout.join(''), code: code
       grunt.log.error results.stderr if code != 0
       callback error, results, code
