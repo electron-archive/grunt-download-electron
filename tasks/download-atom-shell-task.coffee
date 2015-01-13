@@ -102,7 +102,7 @@ module.exports = (grunt) ->
     @requiresConfig "#{@name}.version", "#{@name}.outputDir"
     done = @async()
 
-    {version, outputDir, downloadDir, symbols, rebuild, apm} = grunt.config @name
+    {version, outputDir, downloadDir, symbols, rebuild, apm, token} = grunt.config @name
     version = "v#{version}"
     downloadDir ?= path.join os.tmpdir(), 'downloaded-atom-shell'
     symbols ?= false
@@ -120,7 +120,7 @@ module.exports = (grunt) ->
       rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done
     else
       # Request the assets.
-      github = new GitHub({repo: 'atom/atom-shell'})
+      github = new GitHub({repo: 'atom/atom-shell', token})
       github.getReleases tag_name: version, (error, releases) ->
         unless releases?.length > 0
           grunt.log.error "Cannot find atom-shell #{version} from GitHub", error

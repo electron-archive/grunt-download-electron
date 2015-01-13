@@ -24,6 +24,7 @@ grunt.loadNpmTasks('grunt-download-atom-shell');
 * `symbols` - Download debugging symbols instead of binaries, default to `false`.
 * `rebuild` - Whether to rebuild native modules after atom-shell is downloaded.
 * `apm` - The path to apm.
+* `token` - The [OAuth token](https://developer.github.com/v3/oauth/) to use for GitHub API requests.
 
 ### Example
 
