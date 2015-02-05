@@ -27,24 +27,21 @@ module.exports = (grunt) ->
 
     if process.platform is 'win32' then "#{apmPath}.cmd" else apmPath
 
-  getCurrentAtomShellVersion = (outputDir) ->
-    versionPath = path.join outputDir, 'version'
+  getAtomShellVersion = (directory) ->
+    versionPath = path.join directory, 'version'
     if grunt.file.isFile versionPath
       grunt.file.read(versionPath).trim()
     else
       null
 
-  isAtomShellVersionCached = (downloadDir, version) ->
-    grunt.file.isFile path.join(downloadDir, version, 'version')
-
-  installAtomShell = (outputDir, downloadDir, version) ->
-    wrench.copyDirSyncRecursive path.join(downloadDir, version), outputDir,
+  copyDirectory = (fromPath, toPath) ->
+    wrench.copyDirSyncRecursive fromPath, toPath,
       forceDelete: true
       excludeHiddenUnix: false
       inflateSymlinks: false
 
-  unzipAtomShell = (zipPath, callback) ->
-    grunt.verbose.writeln 'Unzipping atom-shell.'
+  unzipFile = (zipPath, callback) ->
+    grunt.verbose.writeln "Unzipping #{path.basename(zipPath)}."
     directoryPath = path.dirname zipPath
 
     if process.platform is 'darwin'
@@ -69,19 +66,18 @@ module.exports = (grunt) ->
         callback null
       unzipper.extract(path: directoryPath)
 
-  saveAtomShellToCache = (inputStream, outputDir, downloadDir, version, callback) ->
-    wrench.mkdirSyncRecursive path.join downloadDir, version
-    cacheFile = path.join downloadDir, version, 'atom-shell.zip'
+  downloadAndUnzip = (inputStream, zipFilePath, callback) ->
+    wrench.mkdirSyncRecursive(path.dirname(zipFilePath))
 
     unless process.platform is 'win32'
       len = parseInt(inputStream.headers['content-length'], 10)
       progress = new Progress('downloading [:bar] :percent :etas', {complete: '=', incomplete: ' ', width: 20, total: len})
 
-    outputStream = fs.createWriteStream(cacheFile)
+    outputStream = fs.createWriteStream(zipFilePath)
     inputStream.pipe outputStream
     inputStream.on 'error', callback
     outputStream.on 'error', callback
-    outputStream.on 'close', unzipAtomShell.bind this, cacheFile, callback
+    outputStream.on 'close', unzipFile.bind this, zipFilePath, callback
     inputStream.on 'data', (chunk) ->
       return if process.platform is 'win32'
 
@@ -108,15 +104,16 @@ module.exports = (grunt) ->
     symbols ?= false
     rebuild ?= true
     apm ?= getApmPath()
+    versionDownloadDir = path.join(downloadDir, version)
 
     # Do nothing if it's the expected version.
-    currentAtomShellVersion = getCurrentAtomShellVersion outputDir
+    currentAtomShellVersion = getAtomShellVersion(outputDir)
     return done() if currentAtomShellVersion is version
 
     # Try find the cached one.
-    if isAtomShellVersionCached downloadDir, version
+    if getAtomShellVersion(versionDownloadDir)?
       grunt.verbose.writeln("Installing cached atom-shell #{version}.")
-      installAtomShell outputDir, downloadDir, version
+      copyDirectory(versionDownloadDir, outputDir)
       rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done
     else
       # Request the assets.
@@ -154,13 +151,13 @@ module.exports = (grunt) ->
 
             # Save file to cache.
             grunt.verbose.writeln "Downloading atom-shell #{version}."
-            saveAtomShellToCache inputStream, outputDir, downloadDir, version, (error) ->
+            downloadAndUnzip inputStream, path.join(versionDownloadDir, "atom-shell.zip"), (error) ->
               if error?
                 grunt.log.error "Failed to download atom-shell #{version}", error
                 return done false
 
               grunt.verbose.writeln "Installing atom-shell #{version}."
-              installAtomShell outputDir, downloadDir, version
+              copyDirectory(versionDownloadDir, outputDir)
               rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done
 
         if not found
