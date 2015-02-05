@@ -1,6 +1,6 @@
 # grunt-download-atom-shell
 
-Download atom-shell.
+Grunt tasks for downloading atom-shell, and the compatible version of `chromedriver`.
 
 ## Installation
 
@@ -26,27 +26,29 @@ grunt.loadNpmTasks('grunt-download-atom-shell');
 * `apm` - The path to apm.
 * `token` - The [OAuth token](https://developer.github.com/v3/oauth/) to use for GitHub API requests.
 
-### Example
+### Usage
 
-#### Gruntfile.js
+Add the necessary configuration to your `Gruntfile.js`:
 
 ```js
 module.exports = function(grunt) {
   grunt.initConfig({
     'download-atom-shell': {
       version: '0.20.3',
-      outputDir: 'binaries'
+      outputDir: 'my-dependencies'
     }
   });
 };
 ```
 
-#### Gruntfile.coffee
+Then you can download atom-shell to the path you specified:
 
-```coffee
-module.exports = (grunt) ->
-  grunt.initConfig
-    'download-atom-shell':
-      version: '0.16.3'
-      outputDir: 'binaries'
+```shell
+$ grunt download-atom-shell
+```
+
+If you're doing selenium-testing of your atom-shell app, you'll need `chromedriver`, which is distributed with atom-shell. To download it into the atom-shell directory:
+
+```shell
+$ grunt download-atom-shell-chromedriver
 ```
