@@ -41,6 +41,16 @@ module.exports = function(grunt) {
 };
 ```
 
+or your `Gruntfile.coffee`:
+
+```coffee
+module.exports = (grunt) ->
+  grunt.initConfig
+    'download-atom-shell':
+      version: '0.20.3'
+      outputDir: 'my-dependencies'
+```
+
 Then you can download atom-shell to the path you specified:
 
 ```shell
