@@ -5,6 +5,8 @@ wrench   = require 'wrench'
 GitHub   = require 'github-releases'
 Progress = require 'progress'
 
+TaskName = "download-atom-shell"
+
 module.exports = (grunt) ->
   spawn = (options, callback) ->
     childProcess = require 'child_process'
@@ -20,6 +22,12 @@ module.exports = (grunt) ->
       results = stderr: stderr.join(''), stdout: stdout.join(''), code: code
       grunt.log.error results.stderr if code != 0
       callback error, results, code
+
+  getArch = ->
+    switch process.platform
+      when 'win32' then 'ia32'
+      when 'darwin' then 'x64'
+      else process.arch
 
   getApmPath = ->
     apmPath = path.join 'apm', 'node_modules', 'atom-package-manager', 'bin', 'apm'
@@ -94,9 +102,9 @@ module.exports = (grunt) ->
     else
       callback()
 
-  grunt.registerTask 'download-atom-shell', 'Download atom-shell',  ->
-    @requiresConfig "#{@name}.version", "#{@name}.outputDir"
-    {version, outputDir, downloadDir, symbols, rebuild, apm, token} = grunt.config @name
+  grunt.registerTask TaskName, 'Download atom-shell',  ->
+    @requiresConfig "#{TaskName}.version", "#{TaskName}.outputDir"
+    {version, outputDir, downloadDir, symbols, rebuild, apm, token} = grunt.config TaskName
     downloadDir ?= path.join os.tmpdir(), 'downloaded-atom-shell'
     symbols ?= false
     rebuild ?= true
@@ -124,22 +132,12 @@ module.exports = (grunt) ->
         grunt.log.error "Cannot find atom-shell #{version} from GitHub", error
         return done false
 
-      # Decide which arch to download:
-      # Windows: 32bit
-      # Linux: Current platform's arch
-      # Mac: 64bit
-      arch =
-        switch process.platform
-          when 'win32' then 'ia32'
-          when 'darwin' then 'x64'
-          else process.arch
-
       # Which file to download
       filename =
         if symbols
-          "atom-shell-#{version}-#{process.platform}-#{arch}-symbols.zip"
+          "atom-shell-#{version}-#{process.platform}-#{getArch()}-symbols.zip"
         else
-          "atom-shell-#{version}-#{process.platform}-#{arch}.zip"
+          "atom-shell-#{version}-#{process.platform}-#{getArch()}.zip"
 
       # Find the asset of current platform.
       for asset in releases[0].assets when asset.name is filename
@@ -161,4 +159,60 @@ module.exports = (grunt) ->
         return
 
       grunt.log.error "Cannot find #{filename} in atom-shell #{version} release"
+      done false
+
+  grunt.registerTask "#{TaskName}-chromedriver", 'Download the chromedriver binary distributed with atom-shell',  ->
+    @requiresConfig "#{TaskName}.version", "#{TaskName}.outputDir"
+    {version, outputDir, downloadDir, token} = grunt.config(TaskName)
+    version = "v#{version}"
+    downloadDir ?= path.join os.tmpdir(), 'downloaded-atom-shell'
+    chromedriverPath = path.join(outputDir, "chromedriver")
+
+    done = @async()
+
+    # Chromedriver is only distributed with the first patch release for any
+    # given major and minor version of atom-shell.
+    versionWithChromedriver = version.split(".").slice(0, 2).join(".") + ".0"
+    downloadPath = path.join(downloadDir, "#{versionWithChromedriver}-chromedriver")
+
+    # Do nothing if the desired version of atom-shell is already installed with
+    # a chromedriver executable.
+    currentAtomShellVersion = getAtomShellVersion(outputDir)
+    return done() if currentAtomShellVersion is version and grunt.file.isDir(chromedriverPath)
+
+    # Use a cached download of chromedriver if one exists.
+    if grunt.file.isDir(downloadPath)
+      grunt.verbose.writeln("Installing cached chromedriver #{versionWithChromedriver}.")
+      copyDirectory(downloadPath, chromedriverPath)
+      return done()
+
+    # Request the assets.
+    github = new GitHub({repo: 'atom/atom-shell', token})
+    github.getReleases tag_name: versionWithChromedriver, (error, releases) ->
+      unless releases?.length > 0
+        grunt.log.error "Cannot find atom-shell #{versionWithChromedriver} from GitHub", error
+        return done false
+
+      assetNameRegex = new RegExp("chromedriver-.*-#{process.platform}-#{getArch()}")
+
+      # Find the asset for the current platform and architecture.
+      for asset in releases[0].assets when assetNameRegex.test(asset.name)
+        github.downloadAsset asset, (error, inputStream) ->
+          if error?
+            grunt.log.error "Cannot download chromedriver for atom-shell #{versionWithChromedriver}", error
+            return done false
+
+          # Save file to cache.
+          grunt.verbose.writeln "Downloading chromedriver for atom-shell #{versionWithChromedriver}."
+          downloadAndUnzip inputStream, path.join(downloadPath, "chromedriver.zip"), (error) ->
+            if error?
+              grunt.log.error "Failed to download chromedriver for atom-shell #{versionWithChromedriver}", error
+              return done false
+
+            grunt.verbose.writeln "Installing chromedriver for atom-shell #{versionWithChromedriver}."
+            copyDirectory(downloadPath, chromedriverPath)
+            done()
+        return
+
+      grunt.log.error "Cannot find chromedriver in atom-shell #{versionWithChromedriver} release"
       done false
