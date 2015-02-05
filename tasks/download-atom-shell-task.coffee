@@ -193,9 +193,8 @@ module.exports = (grunt) ->
         grunt.log.error "Cannot find atom-shell #{versionWithChromedriver} from GitHub", error
         return done false
 
-      assetNameRegex = new RegExp("chromedriver-.*-#{process.platform}-#{getArch()}")
-
       # Find the asset for the current platform and architecture.
+      assetNameRegex = ///chromedriver-.*-#{process.platform}-#{getArch()}///
       for asset in releases[0].assets when assetNameRegex.test(asset.name)
         github.downloadAsset asset, (error, inputStream) ->
           if error?
