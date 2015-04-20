@@ -5,7 +5,7 @@ wrench   = require 'wrench'
 GitHub   = require 'github-releases'
 Progress = require 'progress'
 
-TaskName = "download-electron"
+TaskName = "download-atom-shell"
 
 module.exports = (grunt) ->
   spawn = (options, callback) ->
@@ -132,12 +132,19 @@ module.exports = (grunt) ->
         grunt.log.error "Cannot find electron #{version} from GitHub", error
         return done false
 
+
+      atomShellAssets = releases[0].assets.filter ({name}) -> name.indexOf('atom-shell-') is 0
+      if atomShellAssets.length > 0
+        projectName = 'atom-shell'
+      else
+        projectName = 'electron'
+
       # Which file to download
       filename =
         if symbols
-          "electron-#{version}-#{process.platform}-#{getArch()}-symbols.zip"
+          "#{projectName}-#{version}-#{process.platform}-#{getArch()}-symbols.zip"
         else
-          "electron-#{version}-#{process.platform}-#{getArch()}.zip"
+          "#{projectName}-#{version}-#{process.platform}-#{getArch()}.zip"
 
       # Find the asset of current platform.
       for asset in releases[0].assets when asset.name is filename
@@ -148,7 +155,7 @@ module.exports = (grunt) ->
 
           # Save file to cache.
           grunt.verbose.writeln "Downloading electron #{version}."
-          downloadAndUnzip inputStream, path.join(versionDownloadDir, "electron.zip"), (error) ->
+          downloadAndUnzip inputStream, path.join(versionDownloadDir, "#{projectName}.zip"), (error) ->
             if error?
               grunt.log.error "Failed to download electron #{version}", error
               return done false
