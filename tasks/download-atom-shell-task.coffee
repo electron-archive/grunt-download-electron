@@ -5,7 +5,7 @@ wrench   = require 'wrench'
 GitHub   = require 'github-releases'
 Progress = require 'progress'
 
-TaskName = "download-atom-shell"
+TaskName = "download-electron"
 
 module.exports = (grunt) ->
   spawn = (options, callback) ->
@@ -126,10 +126,10 @@ module.exports = (grunt) ->
       return
 
     # Request the assets.
-    github = new GitHub({repo: 'atom/atom-shell', token})
+    github = new GitHub({repo: 'atom/electron', token})
     github.getReleases tag_name: version, (error, releases) ->
       unless releases?.length > 0
-        grunt.log.error "Cannot find atom-shell #{version} from GitHub", error
+        grunt.log.error "Cannot find electron #{version} from GitHub", error
         return done false
 
       # Which file to download
@@ -143,22 +143,22 @@ module.exports = (grunt) ->
       for asset in releases[0].assets when asset.name is filename
         github.downloadAsset asset, (error, inputStream) ->
           if error?
-            grunt.log.error "Cannot download atom-shell #{version}", error
+            grunt.log.error "Cannot download electron #{version}", error
             return done false
 
           # Save file to cache.
-          grunt.verbose.writeln "Downloading atom-shell #{version}."
+          grunt.verbose.writeln "Downloading electron #{version}."
           downloadAndUnzip inputStream, path.join(versionDownloadDir, "atom-shell.zip"), (error) ->
             if error?
-              grunt.log.error "Failed to download atom-shell #{version}", error
+              grunt.log.error "Failed to download electron #{version}", error
               return done false
 
-            grunt.verbose.writeln "Installing atom-shell #{version}."
+            grunt.verbose.writeln "Installing electron #{version}."
             copyDirectory(versionDownloadDir, outputDir)
             rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done
         return
 
-      grunt.log.error "Cannot find #{filename} in atom-shell #{version} release"
+      grunt.log.error "Cannot find #{filename} in electron #{version} release"
       done false
 
   grunt.registerTask "#{TaskName}-chromedriver", 'Download the chromedriver binary distributed with atom-shell',  ->
@@ -187,10 +187,10 @@ module.exports = (grunt) ->
       return done()
 
     # Request the assets.
-    github = new GitHub({repo: 'atom/atom-shell', token})
+    github = new GitHub({repo: 'atom/electron', token})
     github.getReleases tag_name: versionWithChromedriver, (error, releases) ->
       unless releases?.length > 0
-        grunt.log.error "Cannot find atom-shell #{versionWithChromedriver} from GitHub", error
+        grunt.log.error "Cannot find electron #{versionWithChromedriver} from GitHub", error
         return done false
 
       # Find the asset for the current platform and architecture.
@@ -198,20 +198,20 @@ module.exports = (grunt) ->
       for asset in releases[0].assets when assetNameRegex.test(asset.name)
         github.downloadAsset asset, (error, inputStream) ->
           if error?
-            grunt.log.error "Cannot download chromedriver for atom-shell #{versionWithChromedriver}", error
+            grunt.log.error "Cannot download chromedriver for electron #{versionWithChromedriver}", error
             return done false
 
           # Save file to cache.
-          grunt.verbose.writeln "Downloading chromedriver for atom-shell #{versionWithChromedriver}."
+          grunt.verbose.writeln "Downloading chromedriver for electron #{versionWithChromedriver}."
           downloadAndUnzip inputStream, path.join(downloadPath, "chromedriver.zip"), (error) ->
             if error?
-              grunt.log.error "Failed to download chromedriver for atom-shell #{versionWithChromedriver}", error
+              grunt.log.error "Failed to download chromedriver forelectronl #{versionWithChromedriver}", error
               return done false
 
-            grunt.verbose.writeln "Installing chromedriver for atom-shell #{versionWithChromedriver}."
+            grunt.verbose.writeln "Installing chromedriver for electron #{versionWithChromedriver}."
             copyDirectory(downloadPath, chromedriverPath)
             done()
         return
 
-      grunt.log.error "Cannot find chromedriver in atom-shell #{versionWithChromedriver} release"
+      grunt.log.error "Cannot find chromedriver in electron #{versionWithChromedriver} release"
       done false
