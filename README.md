@@ -1,6 +1,7 @@
 # grunt-download-atom-shell
 
-Grunt tasks for downloading atom-shell, and the compatible version of `chromedriver`.
+Grunt tasks for downloading Electron, and the compatible version of `chromedriver`.
+Note: older versions of Electron will download with the old name of 'atom-shell'
 
 ## Installation
 
@@ -33,8 +34,8 @@ Add the necessary configuration to your `Gruntfile.js`:
 ```js
 module.exports = function(grunt) {
   grunt.initConfig({
-    'download-atom-shell': {
-      version: '0.20.3',
+    'download-electron-shell': {
+      version: '0.24.0',
       outputDir: 'my-dependencies'
     }
   });
@@ -46,9 +47,22 @@ or your `Gruntfile.coffee`:
 ```coffee
 module.exports = (grunt) ->
   grunt.initConfig
-    'download-atom-shell':
-      version: '0.20.3'
+    'download-electron-shell':
+      version: '0.24.0'
       outputDir: 'my-dependencies'
+```
+
+**Note!**  Older versions of Electron were named 'atom-shell'.  Due to some breaking changes introduced during the rename, if you want to use a version of Electron older than ```0.24.0``` then you should use the ```download-atom-shell``` task definition instead of ```download-electron-shell```
+
+```js
+module.exports = function(grunt) {
+  grunt.initConfig({
+    'download-atom-shell': {
+      version: '0.23.0',
+      outputDir: 'my-dependencies'
+    }
+  });
+};
 ```
 
 Then you can download atom-shell to the path you specified:

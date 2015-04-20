@@ -1,6 +1,6 @@
 {
   "name": "grunt-download-atom-shell",
-  "description": "Grunt task to download atom-shell",
+  "description": "Grunt task to download Electron",
   "version": "0.12.0",
   "main": "grunt.js",
   "dependencies": {

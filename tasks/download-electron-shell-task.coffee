@@ -5,7 +5,7 @@ wrench   = require 'wrench'
 GitHub   = require 'github-releases'
 Progress = require 'progress'
 
-TaskName = "download-electron"
+TaskName = "download-electron-shell"
 
 module.exports = (grunt) ->
   spawn = (options, callback) ->
@@ -150,8 +150,8 @@ module.exports = (grunt) ->
 
     if versionCompare(strippedVersion, "0.24.0", 
         lexicographical: false
-        zeroExtend: true) >= 0
-      grunt.log.error "Unable to use this task for versions 0.24.0 or higher - please use 'download-electron-shell' instead."
+        zeroExtend: true) < 0
+      grunt.log.error "Unable to use this task for versions less than 0.24.0 - please use 'download-atom-shell' instead."
       return false
 
     done = @async()
