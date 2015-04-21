@@ -5,7 +5,7 @@ wrench   = require 'wrench'
 GitHub   = require 'github-releases'
 Progress = require 'progress'
 
-TaskName = "download-atom-shell"
+TaskName = "download-electron"
 
 module.exports = (grunt) ->
   spawn = (options, callback) ->
