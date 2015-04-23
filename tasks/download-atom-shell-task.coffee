@@ -1,8 +1,8 @@
 fs       = require 'fs'
 path     = require 'path'
 os       = require 'os'
+request  = require 'request'
 wrench   = require 'wrench'
-GitHub   = require 'github-releases'
 Progress = require 'progress'
 
 TaskName = "download-electron"
@@ -105,6 +105,18 @@ module.exports = (grunt) ->
     else
       callback()
 
+  createAssetStream = (requestUrl, callback) ->
+    options =
+      url: requestUrl
+      proxy: process.env.http_proxy || process.env.https_proxy
+    readStream = request.get(options)
+    readStream.on('error', callback)
+    readStream.on 'response', (response) ->
+      if response.statusCode is 200
+        callback(null, readStream)
+      else
+        callback(new Error("Request for Electron asset failed: #{response.statusCode} #{requestUrl}"))
+
   grunt.registerTask TaskName, 'Download electron',  ->
     @requiresConfig "#{TaskName}.version", "#{TaskName}.outputDir"
     {version, outputDir, downloadDir, symbols, rebuild, apm, token} = grunt.config TaskName
@@ -112,6 +124,7 @@ module.exports = (grunt) ->
     symbols ?= false
     rebuild ?= true
     apm ?= getApmPath()
+    [major, minor] = version.split('.').map (segment) -> parseInt(segment)
     version = "v#{version}"
     versionDownloadDir = path.join(downloadDir, version)
 
@@ -128,48 +141,33 @@ module.exports = (grunt) ->
       rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done
       return
 
-    # Request the assets.
-    github = new GitHub({repo: 'atom/electron', token})
-    github.getReleases tag_name: version, (error, releases) ->
-      unless releases?.length > 0
-        grunt.log.error "Cannot find electron #{version} from GitHub", error
+    if major is 0 and minor < 24
+      projectName = 'atom-shell'
+    else
+      projectName = 'electron'
+
+    if symbols
+      filename = "#{projectName}-#{version}-#{process.platform}-#{getArch()}-symbols.zip"
+    else
+      filename = "#{projectName}-#{version}-#{process.platform}-#{getArch()}.zip"
+
+    urlPrefix = 'https://github.com/atom/electron/releases/download'
+    assetUrl = "#{urlPrefix}/#{version}/#{filename}"
+
+    createAssetStream electronAssetUrl, (error, inputStream) ->
+      if error?
+        grunt.log.error "Cannot download electron #{version}", error
         return done false
 
+      grunt.verbose.writeln "Downloading electron #{version}."
+      downloadAndUnzip inputStream, path.join(versionDownloadDir, "#{projectName}.zip"), (error) ->
+        if error?
+          grunt.log.error "Failed to download electron #{version}", error
+          return done false
 
-      atomShellAssets = releases[0].assets.filter ({name}) -> name.indexOf('atom-shell-') is 0
-      if atomShellAssets.length > 0
-        projectName = 'atom-shell'
-      else
-        projectName = 'electron'
-
-      # Which file to download
-      filename =
-        if symbols
-          "#{projectName}-#{version}-#{process.platform}-#{getArch()}-symbols.zip"
-        else
-          "#{projectName}-#{version}-#{process.platform}-#{getArch()}.zip"
-
-      # Find the asset of current platform.
-      for asset in releases[0].assets when asset.name is filename
-        github.downloadAsset asset, (error, inputStream) ->
-          if error?
-            grunt.log.error "Cannot download electron #{version}", error
-            return done false
-
-          # Save file to cache.
-          grunt.verbose.writeln "Downloading electron #{version}."
-          downloadAndUnzip inputStream, path.join(versionDownloadDir, "#{projectName}.zip"), (error) ->
-            if error?
-              grunt.log.error "Failed to download electron #{version}", error
-              return done false
-
-            grunt.verbose.writeln "Installing electron #{version}."
-            copyDirectory(versionDownloadDir, outputDir)
-            rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done
-        return
-
-      grunt.log.error "Cannot find #{filename} in electron #{version} release"
-      done false
+        grunt.verbose.writeln "Installing electron #{version}."
+        copyDirectory(versionDownloadDir, outputDir)
+        rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done
 
   grunt.registerTask "#{TaskName}-chromedriver", 'Download the chromedriver binary distributed with electron',  ->
     @requiresConfig "#{TaskName}.version", "#{TaskName}.outputDir"
