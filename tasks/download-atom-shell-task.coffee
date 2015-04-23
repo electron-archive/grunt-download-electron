@@ -68,8 +68,8 @@ module.exports = (grunt) ->
 
         # Make sure atom is executable on Linux
         if process.platform is 'linux'
-          atomAppPath = path.join(directoryPath, 'atom')
-          fs.chmodSync(atomAppPath, '755') if fs.existsSync(atomAppPath)
+          electronAppPath = path.join(directoryPath, 'electron')
+          fs.chmodSync(electronAppPath, '755') if fs.existsSync(electronAppPath)
 
         callback null
       unzipper.extract(path: directoryPath)
