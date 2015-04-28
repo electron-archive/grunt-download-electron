@@ -107,8 +107,7 @@ module.exports = (grunt) ->
 
       # If the appDir has been set, then that is where we want to perform the rebuild.
       # it defaults to the current directory
-      if appDir?
-        options.cwd = appDir
+      options.cwd = appDir if appDir
       spawn {cmd: apm, args: ['rebuild'], opts: options}, callback
     else
       callback()
