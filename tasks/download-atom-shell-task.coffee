@@ -96,24 +96,33 @@ module.exports = (grunt) ->
       process.stdout.cursorTo?(0)
       progress.tick(chunk.length)
 
-  rebuildNativeModules = (apm, previousVersion, currentVersion, needToRebuild, callback) ->
+  rebuildNativeModules = (apm, previousVersion, currentVersion, needToRebuild, callback, appDir) ->
     if currentVersion isnt previousVersion and needToRebuild
       grunt.verbose.writeln "Rebuilding native modules for new electron version #{currentVersion}."
       apm ?= getApmPath()
-      env = ATOM_NODE_VERSION: currentVersion.substr(1)
-      spawn {cmd: apm, args: ['rebuild'], env}, callback
+
+      # When we spawn apm, we still want to use the global environment variables
+      options = env: process.env
+      options.env.ATOM_NODE_VERSION = currentVersion.substr(1)
+
+      # If the appDir has been set, then that is where we want to perform the rebuild.
+      # it defaults to the current directory
+      if appDir?
+        options.cwd = appDir
+      spawn {cmd: apm, args: ['rebuild'], opts: options}, callback
     else
       callback()
 
   grunt.registerTask TaskName, 'Download electron',  ->
     @requiresConfig "#{TaskName}.version", "#{TaskName}.outputDir"
-    {version, outputDir, downloadDir, symbols, rebuild, apm, token} = grunt.config TaskName
+    {version, outputDir, downloadDir, symbols, rebuild, apm, token, appDir} = grunt.config TaskName
     downloadDir ?= path.join os.tmpdir(), 'downloaded-electron'
     symbols ?= false
     rebuild ?= true
     apm ?= getApmPath()
     version = "v#{version}"
     versionDownloadDir = path.join(downloadDir, version)
+    appDir ?= process.cwd()
 
     done = @async()
 
@@ -125,7 +134,7 @@ module.exports = (grunt) ->
     if getAtomShellVersion(versionDownloadDir)?
       grunt.verbose.writeln("Installing cached electron #{version}.")
       copyDirectory(versionDownloadDir, outputDir)
-      rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done
+      rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done, appDir
       return
 
     # Request the assets.
@@ -165,7 +174,7 @@ module.exports = (grunt) ->
 
             grunt.verbose.writeln "Installing electron #{version}."
             copyDirectory(versionDownloadDir, outputDir)
-            rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done
+            rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done, appDir
         return
 
       grunt.log.error "Cannot find #{filename} in electron #{version} release"

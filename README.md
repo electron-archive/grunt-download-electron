@@ -26,6 +26,7 @@ grunt.loadNpmTasks('grunt-download-electron');
 * `rebuild` - Whether to rebuild native modules after Electron is downloaded.
 * `apm` - The path to apm.
 * `token` - The [OAuth token](https://developer.github.com/v3/oauth/) to use for GitHub API requests.
+* `appDir` - Where to find the app when rebuilding the native modules.  Defaults to the current directory.
 
 ### Usage
 
