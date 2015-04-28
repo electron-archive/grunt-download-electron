@@ -102,7 +102,8 @@ module.exports = (grunt) ->
       apm ?= getApmPath()
 
       # When we spawn apm, we still want to use the global environment variables
-      options = env: process.env
+      options = env: {}
+      options.env[key] = value for key, value of process.env
       options.env.ATOM_NODE_VERSION = currentVersion.substr(1)
 
       # If the appDir has been set, then that is where we want to perform the rebuild.
