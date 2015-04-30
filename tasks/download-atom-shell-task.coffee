@@ -229,6 +229,12 @@ module.exports = (grunt) ->
 
             grunt.verbose.writeln "Installing chromedriver for electron #{versionWithChromedriver}."
             copyDirectory(downloadPath, chromedriverPath)
+
+            # Make sure chromedriver is executable on Linux
+            if process.platform is 'linux'
+              chromedriverExecutablePath = path.join(chromedriverPath, 'chromedriver')
+              fs.chmodSync(chromedriverExecutablePath, '755') if fs.existsSync(chromedriverExecutablePath)
+
             done()
         return
 
