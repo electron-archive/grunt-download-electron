@@ -25,7 +25,7 @@ module.exports = (grunt) ->
 
   getArch = ->
     switch process.platform
-      when 'win32' then 'ia32'
+      when 'win32' then 'x64'
       when 'darwin' then 'x64'
       else process.arch
 
