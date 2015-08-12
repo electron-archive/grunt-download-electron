@@ -97,7 +97,9 @@ module.exports = (grunt) ->
       progress.tick(chunk.length)
 
   rebuildNativeModules = (apm, previousVersion, currentVersion, needToRebuild, callback, appDir) ->
-    if currentVersion isnt previousVersion and needToRebuild
+    # Note: In our fork, we skip "apm" below because of it's causing problems for GC-20511.
+    # "apm" doesn't seem to be doing anything important as far as Eagle Desktop is concerned.
+    if false and currentVersion isnt previousVersion and needToRebuild
       grunt.verbose.writeln "Rebuilding native modules for new electron version #{currentVersion}."
       apm ?= getApmPath()
 
