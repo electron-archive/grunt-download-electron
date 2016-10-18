@@ -1,6 +1,6 @@
 # grunt-download-electron
 
-Grunt tasks for downloading [Electron](https://github.com/atom/electron) and the
+Grunt tasks for downloading [Electron](https://github.com/electron/electron) and the
 compatible version of `chromedriver`.
 
 ## Installation

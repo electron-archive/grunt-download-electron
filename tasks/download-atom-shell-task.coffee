@@ -137,7 +137,7 @@ module.exports = (grunt) ->
       return
 
     # Request the assets.
-    github = new GitHub({repo: 'atom/electron', token})
+    github = new GitHub({repo: 'electron/electron', token})
     github.getReleases tag_name: version, (error, releases) ->
       unless releases?.length > 0
         grunt.log.error "Cannot find electron #{version} from GitHub", error
