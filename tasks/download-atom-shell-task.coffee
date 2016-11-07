@@ -23,12 +23,6 @@ module.exports = (grunt) ->
       grunt.log.error results.stderr if code != 0
       callback error, results, code
 
-  getArch = ->
-    switch process.platform
-      when 'win32' then 'ia32'
-      when 'darwin' then 'x64'
-      else process.arch
-
   getApmPath = ->
     apmPath = path.join 'apm', 'node_modules', 'atom-package-manager', 'bin', 'apm'
     apmPath = 'apm' unless grunt.file.isFile apmPath
@@ -114,14 +108,14 @@ module.exports = (grunt) ->
       callback()
 
   grunt.registerTask TaskName, 'Download electron',  ->
-    @requiresConfig "#{TaskName}.version", "#{TaskName}.outputDir"
-    {version, outputDir, downloadDir, symbols, rebuild, apm, token, appDir} = grunt.config TaskName
+    @requiresConfig "#{TaskName}.version", "#{TaskName}.arch", "#{TaskName}.outputDir"
+    {version, arch, outputDir, downloadDir, symbols, rebuild, apm, token, appDir} = grunt.config TaskName
     downloadDir ?= path.join os.tmpdir(), 'downloaded-electron'
     symbols ?= false
     rebuild ?= true
     apm ?= getApmPath()
     version = "v#{version}"
-    versionDownloadDir = path.join(downloadDir, version)
+    versionDownloadDir = path.join(downloadDir, version + '-' + arch)
     appDir ?= process.cwd()
 
     done = @async()
@@ -132,7 +126,7 @@ module.exports = (grunt) ->
 
     # Install a cached download of electron if one is available.
     if getAtomShellVersion(versionDownloadDir)?
-      grunt.verbose.writeln("Installing cached electron #{version}.")
+      grunt.verbose.writeln("Installing cached electron #{version}-#{arch}.")
       copyDirectory(versionDownloadDir, outputDir)
       rebuildNativeModules apm, currentAtomShellVersion, version, rebuild, done, appDir
       return
@@ -154,9 +148,9 @@ module.exports = (grunt) ->
       # Which file to download
       filename =
         if symbols
-          "#{projectName}-#{version}-#{process.platform}-#{getArch()}-symbols.zip"
+          "#{projectName}-#{version}-#{process.platform}-#{arch}-symbols.zip"
         else
-          "#{projectName}-#{version}-#{process.platform}-#{getArch()}.zip"
+          "#{projectName}-#{version}-#{process.platform}-#{arch}.zip"
 
       # Find the asset of current platform.
       for asset in releases[0].assets when asset.name is filename
@@ -181,8 +175,8 @@ module.exports = (grunt) ->
       done false
 
   grunt.registerTask "#{TaskName}-chromedriver", 'Download the chromedriver binary distributed with electron',  ->
-    @requiresConfig "#{TaskName}.version", "#{TaskName}.outputDir"
-    {version, outputDir, downloadDir, token} = grunt.config(TaskName)
+    @requiresConfig "#{TaskName}.version", "#{TaskName}.arch", "#{TaskName}.outputDir"
+    {version, arch, outputDir, downloadDir, token} = grunt.config(TaskName)
     version = "v#{version}"
     downloadDir ?= path.join os.tmpdir(), 'downloaded-electron'
     chromedriverPath = path.join(outputDir, "chromedriver")
@@ -192,7 +186,7 @@ module.exports = (grunt) ->
     # Chromedriver is only distributed with the first patch release for any
     # given major and minor version of electron.
     versionWithChromedriver = version.split(".").slice(0, 2).join(".") + ".0"
-    downloadPath = path.join(downloadDir, "#{versionWithChromedriver}-chromedriver")
+    downloadPath = path.join(downloadDir, "#{versionWithChromedriver}-#{arch}-chromedriver")
 
     # Do nothing if the desired version of electron is already installed with
     # a chromedriver executable.
@@ -201,7 +195,7 @@ module.exports = (grunt) ->
 
     # Use a cached download of chromedriver if one exists.
     if grunt.file.isDir(downloadPath)
-      grunt.verbose.writeln("Installing cached chromedriver #{versionWithChromedriver}.")
+      grunt.verbose.writeln("Installing cached chromedriver #{versionWithChromedriver}-#{arch}.")
       copyDirectory(downloadPath, chromedriverPath)
       return done()
 
@@ -213,21 +207,21 @@ module.exports = (grunt) ->
         return done false
 
       # Find the asset for the current platform and architecture.
-      assetNameRegex = ///chromedriver-.*-#{process.platform}-#{getArch()}///
+      assetNameRegex = ///chromedriver-.*-#{process.platform}-#{arch}///
       for asset in releases[0].assets when assetNameRegex.test(asset.name)
         github.downloadAsset asset, (error, inputStream) ->
           if error?
-            grunt.log.error "Cannot download chromedriver for electron #{versionWithChromedriver}", error
+            grunt.log.error "Cannot download chromedriver for electron #{versionWithChromedriver}-#{arch}", error
             return done false
 
           # Save file to cache.
-          grunt.verbose.writeln "Downloading chromedriver for electron #{versionWithChromedriver}."
+          grunt.verbose.writeln "Downloading chromedriver for electron #{versionWithChromedriver}-#{arch}."
           downloadAndUnzip inputStream, path.join(downloadPath, "chromedriver.zip"), (error) ->
             if error?
-              grunt.log.error "Failed to download chromedriver for electron #{versionWithChromedriver}", error
+              grunt.log.error "Failed to download chromedriver for electron #{versionWithChromedriver}-#{arch}", error
               return done false
 
-            grunt.verbose.writeln "Installing chromedriver for electron #{versionWithChromedriver}."
+            grunt.verbose.writeln "Installing chromedriver for electron #{versionWithChromedriver}-#{arch}."
             copyDirectory(downloadPath, chromedriverPath)
 
             # Make sure chromedriver is executable on Linux
@@ -238,5 +232,5 @@ module.exports = (grunt) ->
             done()
         return
 
-      grunt.log.error "Cannot find chromedriver in electron #{versionWithChromedriver} release"
+      grunt.log.error "Cannot find #{arch} chromedriver in electron #{versionWithChromedriver} release"
       done false
