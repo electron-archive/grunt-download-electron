@@ -20,6 +20,7 @@ grunt.loadNpmTasks('grunt-download-electron');
 ## Options
 
 * `version` - **Required** The version of Electron you want to download.
+* `arch` - **Required** The architecture of Electron you want to download.
 * `outputDir` - **Required** Where to put the downloaded Electron release.
 * `downloadDir` - Where to find and save cached downloaded Electron releases.
 * `symbols` - Download debugging symbols instead of binaries, default to `false`.
@@ -37,6 +38,7 @@ module.exports = function(grunt) {
   grunt.initConfig({
     'download-electron': {
       version: '0.24.0',
+      arch: 'ia32',
       outputDir: 'electron'
     }
   });
@@ -50,6 +52,7 @@ module.exports = (grunt) ->
   grunt.initConfig
     'download-electron':
       version: '0.24.0'
+      arch: 'ia32'
       outputDir: 'electron'
 ```
 
