@@ -1,7 +1,7 @@
 {
   "name": "grunt-download-electron",
   "description": "Grunt task to download electron",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "main": "grunt.js",
   "dependencies": {
     "decompress-zip": "0.0.4",
